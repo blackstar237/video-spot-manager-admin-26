@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import SpotsList from "./pages/SpotsList";
+import SpotsListSupabase from "./pages/SpotsListSupabase";
 import AddEditSpot from "./pages/AddEditSpot";
 import NotFound from "./pages/NotFound";
 
@@ -21,7 +22,8 @@ const App = () => (
         <Routes>
           <Route element={<AdminLayout />}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/spots" element={<SpotsList />} />
+            <Route path="/spots" element={<SpotsListSupabase />} />
+            <Route path="/spots-mock" element={<SpotsList />} />
             <Route path="/spots/new" element={<AddEditSpot />} />
             <Route path="/spots/:id" element={<AddEditSpot />} />
           </Route>

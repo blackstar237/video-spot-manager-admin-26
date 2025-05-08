@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Plus, Search, Calendar, Tag, Clock } from 'lucide-react';
+import { Play, Plus, Search, Calendar, Tag, Clock, Video as VideoIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { VideoCard } from '@/components/spots/VideoCard';
@@ -158,7 +157,7 @@ const SpotsList = () => {
                         />
                       ) : (
                         <div className="flex items-center justify-center w-full h-full">
-                          <Video className="h-6 w-6 text-muted-foreground" />
+                          <VideoIcon className="h-6 w-6 text-muted-foreground" />
                         </div>
                       )}
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
