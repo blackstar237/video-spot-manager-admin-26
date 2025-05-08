@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -36,6 +35,7 @@ export interface SpotDisplay {
   thumbnailUrl?: string;
   videoUrl?: string;
   categoryId?: string;
+  description?: string | null;
 }
 
 export const fetchVideos = async (): Promise<SpotDisplay[]> => {
@@ -64,7 +64,8 @@ export const fetchVideos = async (): Promise<SpotDisplay[]> => {
       createdAt: video.created_at ? new Date(video.created_at).toLocaleDateString() : "Date inconnue",
       status: "Publié", // Default status, you may want to add a status field in your database
       thumbnailUrl: video.thumbnail_url,
-      videoUrl: video.video_url
+      videoUrl: video.video_url,
+      description: video.description
     }));
   } catch (error) {
     console.error("Unexpected error:", error);
@@ -120,7 +121,8 @@ export const fetchVideoById = async (id: string): Promise<SpotDisplay | null> =>
       createdAt: video.created_at ? new Date(video.created_at).toLocaleDateString() : "Date inconnue",
       status: "Publié", // Default status
       thumbnailUrl: video.thumbnail_url,
-      videoUrl: video.video_url
+      videoUrl: video.video_url,
+      description: video.description
     };
   } catch (error) {
     console.error("Unexpected error:", error);

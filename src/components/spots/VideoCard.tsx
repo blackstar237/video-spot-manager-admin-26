@@ -6,7 +6,7 @@ import { Calendar, Clock, Play, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { incrementViews } from '@/services/videoService';
 import { useState } from 'react';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface VideoCardProps {
   spot: {
@@ -85,6 +85,7 @@ export const VideoCard = ({ spot }: VideoCardProps) => {
 
       <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
         <DialogContent className="max-w-4xl h-auto p-0 overflow-hidden bg-black border-none">
+          <DialogTitle className="sr-only">Aperçu de la vidéo</DialogTitle>
           {spot.videoUrl && (
             <video 
               className="w-full h-auto"

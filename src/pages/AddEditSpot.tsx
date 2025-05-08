@@ -351,7 +351,7 @@ const AddEditSpot = () => {
                                 onChange={handleVideoUpload}
                                 accept="video/*"
                               />
-                              <Button variant="outline" type="button" as="span">
+                              <Button variant="outline" type="button">
                                 <Upload className="mr-2 h-4 w-4" /> Remplacer
                               </Button>
                             </label>
@@ -416,7 +416,7 @@ const AddEditSpot = () => {
                             onChange={handleThumbnailUpload}
                             accept="image/*"
                           />
-                          <Button variant="outline" type="button" as="span">
+                          <Button variant="outline" type="button">
                             <Upload className="mr-2 h-4 w-4" /> {thumbnailPreviewUrl ? 'Modifier' : 'Ajouter'}
                           </Button>
                         </label>
