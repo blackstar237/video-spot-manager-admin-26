@@ -9,7 +9,7 @@ import { Play, Plus, Search, Calendar, Tag, Clock, Video as VideoIcon, Loader2 }
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { VideoCard } from '@/components/spots/VideoCard';
-import { fetchVideos, fetchVideoCategories, SpotDisplay, VideoCategory } from '@/services/videoService';
+import { fetchVideos, fetchVideoCategories, SpotDisplay, VideoCategory, incrementViews } from '@/services/videoService';
 import { useQuery } from '@tanstack/react-query';
 
 const SpotsListSupabase = () => {

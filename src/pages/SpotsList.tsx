@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,64 +13,70 @@ import { VideoCard } from '@/components/spots/VideoCard';
 // Données simulées
 const mockSpots = [
   { 
-    id: 1, 
+    id: "1", // Changed from number to string
     title: 'Campagne printemps 2023', 
     client: 'Mode Express', 
     duration: '30s', 
     category: 'Mode', 
     createdAt: '2023-02-15', 
     status: 'Publié',
-    thumbnailUrl: 'https://source.unsplash.com/1488590528505-98d2b5aba04b'
+    thumbnailUrl: 'https://source.unsplash.com/1488590528505-98d2b5aba04b',
+    videoUrl: 'https://example.com/videos/1.mp4' // Added videoUrl
   },
   { 
-    id: 2, 
+    id: "2", // Changed from number to string
     title: 'Événement annuel', 
     client: 'Tech Solutions', 
     duration: '45s', 
     category: 'Technologie', 
     createdAt: '2023-03-10', 
     status: 'En attente',
-    thumbnailUrl: 'https://source.unsplash.com/1605810230434-7631ac76ec81'
+    thumbnailUrl: 'https://source.unsplash.com/1605810230434-7631ac76ec81',
+    videoUrl: 'https://example.com/videos/2.mp4' // Added videoUrl
   },
   { 
-    id: 3, 
+    id: "3", // Changed from number to string
     title: 'Promotion été', 
     client: 'Vacances Plus', 
     duration: '20s', 
     category: 'Voyage', 
     createdAt: '2023-04-22', 
     status: 'Publié',
-    thumbnailUrl: 'https://source.unsplash.com/1649972904349-6e44c42644a7' 
+    thumbnailUrl: 'https://source.unsplash.com/1649972904349-6e44c42644a7',
+    videoUrl: 'https://example.com/videos/3.mp4' // Added videoUrl
   },
   { 
-    id: 4, 
+    id: "4", // Changed from number to string
     title: 'Lancement produit', 
     client: 'Innov Electronics', 
     duration: '60s', 
     category: 'Technologie', 
     createdAt: '2023-05-05', 
     status: 'Brouillon',
-    thumbnailUrl: 'https://source.unsplash.com/1461749280684-dccba630e2f6' 
+    thumbnailUrl: 'https://source.unsplash.com/1461749280684-dccba630e2f6',
+    videoUrl: 'https://example.com/videos/4.mp4' // Added videoUrl
   },
   { 
-    id: 5, 
+    id: "5", // Changed from number to string
     title: 'Offre spéciale', 
     client: 'MegaStore', 
     duration: '15s', 
     category: 'Commerce', 
     createdAt: '2023-05-18', 
     status: 'Publié',
-    thumbnailUrl: 'https://source.unsplash.com/1581091226825-a6a2a5aee158' 
+    thumbnailUrl: 'https://source.unsplash.com/1581091226825-a6a2a5aee158',
+    videoUrl: 'https://example.com/videos/5.mp4' // Added videoUrl
   },
   { 
-    id: 6, 
+    id: "6", // Changed from number to string
     title: 'Campagne automne', 
     client: 'Style & Co', 
     duration: '30s', 
     category: 'Mode', 
     createdAt: '2023-06-01', 
     status: 'En attente',
-    thumbnailUrl: 'https://source.unsplash.com/1526374965328-7f61d4dc18c5' 
+    thumbnailUrl: 'https://source.unsplash.com/1526374965328-7f61d4dc18c5',
+    videoUrl: 'https://example.com/videos/6.mp4' // Added videoUrl
   },
 ];
 
