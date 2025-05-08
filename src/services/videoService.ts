@@ -129,6 +129,36 @@ export const fetchVideoById = async (id: string): Promise<SpotDisplay | null> =>
   }
 };
 
+export const uploadFile = async (file: File, path: string): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `${path}/${fileName}`;
+
+    const { error: uploadError } = await supabase
+      .storage
+      .from('video-spots')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error("Error uploading file:", uploadError);
+      toast.error("Erreur lors de l'upload du fichier");
+      return null;
+    }
+
+    const { data } = supabase
+      .storage
+      .from('video-spots')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  } catch (error) {
+    console.error("Unexpected error during upload:", error);
+    toast.error("Une erreur inattendue s'est produite lors de l'upload");
+    return null;
+  }
+};
+
 export const createVideo = async (videoData: { 
   title: string;
   video_url: string;

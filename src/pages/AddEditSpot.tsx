@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect, ChangeEvent } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,58 +9,221 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Upload, Clock, Tag, Play, Save, ArrowLeft, Trash2 } from 'lucide-react';
+import { Upload, Clock, Tag, Play, Save, ArrowLeft, Trash2, Loader2, FileVideo, FileImage } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  fetchVideoById, 
+  fetchVideoCategories, 
+  createVideo, 
+  updateVideo, 
+  deleteVideo, 
+  uploadFile, 
+  VideoCategory 
+} from '../services/videoService';
 
 const AddEditSpot = () => {
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
-  // État du formulaire - valeurs par défaut pour édition
-  const [spotData, setSpotData] = useState({
-    title: isEditing ? 'Campagne printemps 2023' : '',
-    client: isEditing ? 'Mode Express' : '',
-    description: isEditing ? 'Spot publicitaire pour la campagne printemps-été...' : '',
-    category: isEditing ? 'Mode' : '',
-    tags: isEditing ? 'printemps, mode, publicité' : '',
-    duration: isEditing ? '30' : '',
-    status: isEditing ? 'published' : 'draft',
+  // États pour le formulaire
+  const [formData, setFormData] = useState({
+    title: '',
+    client: '',
+    description: '',
+    category_id: '',
+    tags: '',
+    duration: '',
+    status: 'draft',
+  });
+
+  // États pour les fichiers
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Récupérer les catégories
+  const { data: categories = [] } = useQuery({
+    queryKey: ['videoCategories'],
+    queryFn: fetchVideoCategories,
+  });
+
+  // Récupérer les détails du spot si on est en mode édition
+  const { data: videoDetails, isLoading: isLoadingVideo } = useQuery({
+    queryKey: ['video', id],
+    queryFn: () => fetchVideoById(id!),
+    enabled: isEditing,
+  });
+
+  // Préremplir le formulaire avec les données existantes en mode édition
+  useEffect(() => {
+    if (isEditing && videoDetails) {
+      setFormData({
+        title: videoDetails.title,
+        client: videoDetails.client || '',
+        description: videoDetails.description || '',
+        category_id: videoDetails.categoryId || '',
+        tags: '', // À implémenter si nécessaire
+        duration: videoDetails.duration || '',
+        status: 'published', // À ajuster selon le modèle de données
+      });
+
+      if (videoDetails.videoUrl) {
+        setVideoPreviewUrl(videoDetails.videoUrl);
+      }
+
+      if (videoDetails.thumbnailUrl) {
+        setThumbnailPreviewUrl(videoDetails.thumbnailUrl);
+      }
+    }
+  }, [isEditing, videoDetails]);
+
+  // Mutations pour créer/mettre à jour/supprimer un spot
+  const createMutation = useMutation({
+    mutationFn: createVideo,
+    onSuccess: (newVideoId) => {
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
+      if (newVideoId) {
+        navigate(`/spots/${newVideoId}`);
+      } else {
+        navigate('/spots');
+      }
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: any }) => updateVideo(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
+      queryClient.invalidateQueries({ queryKey: ['video', id] });
+      navigate('/spots');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteVideo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
+      navigate('/spots');
+    }
   });
 
   // Gestion du changement des champs du formulaire
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setSpotData({
-      ...spotData,
-      [name]: value,
-    });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Gestion du changement des selects
+  // Gestion du changement des sélects
   const handleSelectChange = (name: string, value: string) => {
-    setSpotData({
-      ...spotData,
-      [name]: value,
-    });
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Gestion de l'upload de vidéo
+  const handleVideoUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('video/')) {
+        setVideoFile(file);
+        const tempUrl = URL.createObjectURL(file);
+        setVideoPreviewUrl(tempUrl);
+      } else {
+        toast.error("Le fichier sélectionné n'est pas une vidéo valide");
+      }
+    }
+  };
+
+  // Gestion de l'upload de miniature
+  const handleThumbnailUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setThumbnailFile(file);
+        const tempUrl = URL.createObjectURL(file);
+        setThumbnailPreviewUrl(tempUrl);
+      } else {
+        toast.error("Le fichier sélectionné n'est pas une image valide");
+      }
+    }
   };
 
   // Soumission du formulaire
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Simulation d'enregistrement réussi
-    setTimeout(() => {
-      toast.success(isEditing 
-        ? "Le spot a été mis à jour avec succès" 
-        : "Le spot a été ajouté avec succès"
-      );
-    }, 1000);
+    setIsUploading(true);
+
+    try {
+      // Upload de la vidéo si un fichier est sélectionné
+      let video_url = videoPreviewUrl;
+      if (videoFile) {
+        const uploadedUrl = await uploadFile(videoFile, 'videos');
+        if (uploadedUrl) {
+          video_url = uploadedUrl;
+        } else {
+          toast.error("Erreur lors de l'upload de la vidéo");
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      // S'il n'y a pas de vidéo (ni fichier ni URL existante), empêcher la soumission
+      if (!video_url) {
+        toast.error("Une vidéo est requise pour créer un spot publicitaire");
+        setIsUploading(false);
+        return;
+      }
+
+      // Upload de la miniature si un fichier est sélectionné
+      let thumbnail_url = thumbnailPreviewUrl;
+      if (thumbnailFile) {
+        const uploadedUrl = await uploadFile(thumbnailFile, 'thumbnails');
+        if (uploadedUrl) {
+          thumbnail_url = uploadedUrl;
+        }
+      }
+
+      const videoData = {
+        title: formData.title,
+        client: formData.client || null,
+        description: formData.description || null,
+        category_id: formData.category_id || null,
+        duration: formData.duration || null,
+        thumbnail_url: thumbnail_url || null,
+        video_url: video_url,
+      };
+
+      if (isEditing && id) {
+        updateMutation.mutate({ id, data: videoData });
+      } else {
+        createMutation.mutate(videoData as any);
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Une erreur est survenue lors de l'enregistrement");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handleUploadClick = () => {
-    // Simulation d'ouverture de sélecteur de fichier
-    toast.info("Ouverture du sélecteur de fichiers...");
+  // Gestion de la suppression d'un spot
+  const handleDelete = () => {
+    if (isEditing && id && window.confirm("Êtes-vous sûr de vouloir supprimer ce spot ?")) {
+      deleteMutation.mutate(id);
+    }
   };
+
+  if (isEditing && isLoadingVideo) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-lg">Chargement du spot...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
@@ -103,7 +266,7 @@ const AddEditSpot = () => {
                         id="title"
                         name="title"
                         placeholder="Entrez le titre du spot"
-                        value={spotData.title}
+                        value={formData.title}
                         onChange={handleInputChange}
                         required
                       />
@@ -115,7 +278,7 @@ const AddEditSpot = () => {
                         id="description"
                         name="description"
                         placeholder="Entrez une description du spot"
-                        value={spotData.description}
+                        value={formData.description}
                         onChange={handleInputChange}
                         rows={5}
                       />
@@ -128,7 +291,7 @@ const AddEditSpot = () => {
                           id="client"
                           name="client"
                           placeholder="Nom du client"
-                          value={spotData.client}
+                          value={formData.client}
                           onChange={handleInputChange}
                         />
                       </div>
@@ -136,18 +299,18 @@ const AddEditSpot = () => {
                       <div className="space-y-2">
                         <Label htmlFor="category">Catégorie</Label>
                         <Select 
-                          value={spotData.category}
-                          onValueChange={(value) => handleSelectChange('category', value)}
+                          value={formData.category_id}
+                          onValueChange={(value) => handleSelectChange('category_id', value)}
                         >
                           <SelectTrigger id="category">
                             <SelectValue placeholder="Sélectionnez une catégorie" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Mode">Mode</SelectItem>
-                            <SelectItem value="Technologie">Technologie</SelectItem>
-                            <SelectItem value="Voyage">Voyage</SelectItem>
-                            <SelectItem value="Alimentation">Alimentation</SelectItem>
-                            <SelectItem value="Commerce">Commerce</SelectItem>
+                            {categories.map((category: VideoCategory) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -159,7 +322,7 @@ const AddEditSpot = () => {
                         id="tags"
                         name="tags"
                         placeholder="printemps, mode, publicité"
-                        value={spotData.tags}
+                        value={formData.tags}
                         onChange={handleInputChange}
                       />
                     </div>
@@ -171,44 +334,59 @@ const AddEditSpot = () => {
                 <Card>
                   <CardContent className="p-6 space-y-6">
                     <div className="text-center">
-                      {isEditing ? (
+                      {videoPreviewUrl ? (
                         <div className="space-y-4">
                           <div className="w-full aspect-video bg-muted rounded-md overflow-hidden relative">
-                            <img 
-                              src="https://source.unsplash.com/1488590528505-98d2b5aba04b" 
-                              alt="Aperçu vidéo" 
+                            <video 
+                              src={videoPreviewUrl}
+                              controls
                               className="w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                              <Button variant="outline" size="icon" className="h-12 w-12 bg-white/80 hover:bg-white">
-                                <Play className="h-6 w-6" />
-                              </Button>
-                            </div>
                           </div>
                           <div className="flex justify-center gap-4">
-                            <Button variant="outline" onClick={handleUploadClick}>
-                              <Upload className="mr-2 h-4 w-4" /> Remplacer
-                            </Button>
-                            <Button variant="destructive">
+                            <label className="cursor-pointer">
+                              <Input 
+                                type="file" 
+                                className="hidden" 
+                                onChange={handleVideoUpload}
+                                accept="video/*"
+                              />
+                              <Button variant="outline" type="button" as="span">
+                                <Upload className="mr-2 h-4 w-4" /> Remplacer
+                              </Button>
+                            </label>
+                            <Button 
+                              variant="destructive" 
+                              type="button"
+                              onClick={() => {
+                                setVideoPreviewUrl(null);
+                                setVideoFile(null);
+                              }}
+                            >
                               <Trash2 className="mr-2 h-4 w-4" /> Supprimer
                             </Button>
                           </div>
                         </div>
                       ) : (
-                        <div 
-                          className="border-2 border-dashed rounded-lg p-12 text-center hover:bg-muted/50 cursor-pointer transition-colors"
-                          onClick={handleUploadClick}
+                        <label 
+                          className="border-2 border-dashed rounded-lg p-12 text-center hover:bg-muted/50 cursor-pointer transition-colors block"
                         >
+                          <Input 
+                            type="file" 
+                            className="hidden" 
+                            onChange={handleVideoUpload}
+                            accept="video/*"
+                          />
                           <div className="mx-auto flex flex-col items-center justify-center space-y-4">
                             <div className="rounded-full bg-primary/10 p-3">
-                              <Upload className="h-8 w-8 text-primary" />
+                              <FileVideo className="h-8 w-8 text-primary" />
                             </div>
                             <div className="space-y-2">
                               <h3 className="font-medium">Importer votre vidéo</h3>
                               <p className="text-sm text-muted-foreground">Glissez-déposez ou cliquez pour sélectionner</p>
                             </div>
                           </div>
-                        </div>
+                        </label>
                       )}
                     </div>
 
@@ -218,17 +396,43 @@ const AddEditSpot = () => {
                       <Label htmlFor="thumbnail">Miniature personnalisée</Label>
                       <div className="flex gap-4 items-center">
                         <div className="w-24 h-16 bg-muted rounded-md overflow-hidden">
-                          {isEditing && (
+                          {thumbnailPreviewUrl && (
                             <img 
-                              src="https://source.unsplash.com/1488590528505-98d2b5aba04b" 
+                              src={thumbnailPreviewUrl}
                               alt="Miniature" 
                               className="w-full h-full object-cover"
                             />
                           )}
+                          {!thumbnailPreviewUrl && (
+                            <div className="flex items-center justify-center w-full h-full">
+                              <FileImage className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
                         </div>
-                        <Button variant="outline" onClick={handleUploadClick}>
-                          <Upload className="mr-2 h-4 w-4" /> {isEditing ? 'Modifier' : 'Ajouter'}
-                        </Button>
+                        <label className="cursor-pointer">
+                          <Input 
+                            type="file" 
+                            className="hidden" 
+                            onChange={handleThumbnailUpload}
+                            accept="image/*"
+                          />
+                          <Button variant="outline" type="button" as="span">
+                            <Upload className="mr-2 h-4 w-4" /> {thumbnailPreviewUrl ? 'Modifier' : 'Ajouter'}
+                          </Button>
+                        </label>
+                        {thumbnailPreviewUrl && (
+                          <Button 
+                            variant="destructive" 
+                            size="icon"
+                            type="button"
+                            onClick={() => {
+                              setThumbnailPreviewUrl(null);
+                              setThumbnailFile(null);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Image recommandée: 16:9, format .jpg ou .png
@@ -249,7 +453,7 @@ const AddEditSpot = () => {
                           name="duration"
                           type="number"
                           placeholder="30"
-                          value={spotData.duration}
+                          value={formData.duration}
                           onChange={handleInputChange}
                         />
                       </div>
@@ -257,7 +461,7 @@ const AddEditSpot = () => {
                       <div className="space-y-2">
                         <Label htmlFor="status">Statut</Label>
                         <Select 
-                          value={spotData.status}
+                          value={formData.status}
                           onValueChange={(value) => handleSelectChange('status', value)}
                         >
                           <SelectTrigger id="status">
@@ -291,18 +495,38 @@ const AddEditSpot = () => {
                 <CardContent className="p-6 space-y-4">
                   <h3 className="text-lg font-medium">Actions</h3>
                   <div className="space-y-2">
-                    <Button className="w-full" type="submit">
-                      <Save className="mr-2 h-4 w-4" />
-                      {isEditing ? 'Mettre à jour' : 'Enregistrer'}
+                    <Button className="w-full" type="submit" disabled={isUploading}>
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Upload en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          {isEditing ? 'Mettre à jour' : 'Enregistrer'}
+                        </>
+                      )}
                     </Button>
-                    {isEditing && (
-                      <Button variant="outline" className="w-full">
+                    {isEditing && videoPreviewUrl && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        type="button"
+                        onClick={() => window.open(videoPreviewUrl, '_blank')}
+                      >
+                        <Play className="mr-2 h-4 w-4" />
                         Prévisualiser
                       </Button>
                     )}
                   </div>
                   {isEditing && (
-                    <Button variant="destructive" className="w-full">
+                    <Button 
+                      variant="destructive" 
+                      className="w-full"
+                      type="button"
+                      onClick={handleDelete}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Supprimer le spot
                     </Button>
@@ -313,19 +537,11 @@ const AddEditSpot = () => {
               <Card>
                 <CardContent className="p-6 space-y-4">
                   <h3 className="text-lg font-medium">Informations</h3>
-                  {isEditing ? (
+                  {isEditing && videoDetails ? (
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Ajouté le</span>
-                        <span>15/02/2023</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Modifié le</span>
-                        <span>22/05/2023</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Par</span>
-                        <span>Thomas Durant</span>
+                        <span>{videoDetails.createdAt}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">ID</span>
