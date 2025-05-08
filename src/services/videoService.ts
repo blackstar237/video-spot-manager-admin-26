@@ -26,7 +26,7 @@ export interface VideoCategory {
 }
 
 export interface SpotDisplay {
-  id: number | string;
+  id: string;
   title: string;
   client: string; 
   duration: string; 
@@ -129,7 +129,15 @@ export const fetchVideoById = async (id: string): Promise<SpotDisplay | null> =>
   }
 };
 
-export const createVideo = async (videoData: Partial<Video>): Promise<string | null> => {
+export const createVideo = async (videoData: { 
+  title: string;
+  video_url: string;
+  client?: string | null;
+  description?: string | null;
+  duration?: string | null;
+  category_id?: string | null;
+  thumbnail_url?: string | null;
+}): Promise<string | null> => {
   try {
     const { data, error } = await supabase
       .from('videos')
@@ -151,7 +159,15 @@ export const createVideo = async (videoData: Partial<Video>): Promise<string | n
   }
 };
 
-export const updateVideo = async (id: string, videoData: Partial<Video>): Promise<boolean> => {
+export const updateVideo = async (id: string, videoData: { 
+  title?: string;
+  video_url?: string;
+  client?: string | null;
+  description?: string | null;
+  duration?: string | null;
+  category_id?: string | null;
+  thumbnail_url?: string | null;
+}): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('videos')

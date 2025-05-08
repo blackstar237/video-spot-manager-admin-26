@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -66,7 +66,7 @@ const SpotsListSupabase = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes les catégories</SelectItem>
-              {categories.map((category) => (
+              {categories.map((category: VideoCategory) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
                 </SelectItem>
@@ -128,7 +128,13 @@ const SpotsListSupabase = () => {
                             </div>
                           )}
                           <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                            <Button variant="outline" size="icon" className="h-8 w-8 bg-white/80">
+                            <Button variant="outline" size="icon" className="h-8 w-8 bg-white/80" onClick={() => {
+                              if (spot.id) {
+                                incrementViews(spot.id);
+                              }
+                              // Ouvrir la vidéo ici
+                              window.open(spot.videoUrl, "_blank");
+                            }}>
                               <Play className="h-4 w-4" />
                             </Button>
                           </div>
