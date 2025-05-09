@@ -1,5 +1,5 @@
 
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, ChangeEvent, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,10 @@ const AddEditSpot = () => {
   const isEditing = Boolean(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Refs pour les input file
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   
   // États pour le formulaire
   const [formData, setFormData] = useState({
@@ -149,6 +153,15 @@ const AddEditSpot = () => {
         toast.error("Le fichier sélectionné n'est pas une image valide");
       }
     }
+  };
+
+  // Déclencheurs pour ouvrir les sélecteurs de fichiers
+  const triggerVideoInput = () => {
+    videoInputRef.current?.click();
+  };
+
+  const triggerThumbnailInput = () => {
+    thumbnailInputRef.current?.click();
   };
 
   // Soumission du formulaire
@@ -344,17 +357,16 @@ const AddEditSpot = () => {
                             />
                           </div>
                           <div className="flex justify-center gap-4">
-                            <label className="cursor-pointer">
-                              <Input 
-                                type="file" 
-                                className="hidden" 
-                                onChange={handleVideoUpload}
-                                accept="video/*"
-                              />
-                              <Button variant="outline" type="button">
-                                <Upload className="mr-2 h-4 w-4" /> Remplacer
-                              </Button>
-                            </label>
+                            <Button variant="outline" type="button" onClick={triggerVideoInput}>
+                              <Upload className="mr-2 h-4 w-4" /> Remplacer
+                            </Button>
+                            <Input 
+                              ref={videoInputRef}
+                              type="file" 
+                              className="hidden" 
+                              onChange={handleVideoUpload}
+                              accept="video/*"
+                            />
                             <Button 
                               variant="destructive" 
                               type="button"
@@ -368,10 +380,11 @@ const AddEditSpot = () => {
                           </div>
                         </div>
                       ) : (
-                        <label 
+                        <div onClick={triggerVideoInput} 
                           className="border-2 border-dashed rounded-lg p-12 text-center hover:bg-muted/50 cursor-pointer transition-colors block"
                         >
                           <Input 
+                            ref={videoInputRef}
                             type="file" 
                             className="hidden" 
                             onChange={handleVideoUpload}
@@ -386,7 +399,7 @@ const AddEditSpot = () => {
                               <p className="text-sm text-muted-foreground">Glissez-déposez ou cliquez pour sélectionner</p>
                             </div>
                           </div>
-                        </label>
+                        </div>
                       )}
                     </div>
 
@@ -409,17 +422,20 @@ const AddEditSpot = () => {
                             </div>
                           )}
                         </div>
-                        <label className="cursor-pointer">
-                          <Input 
-                            type="file" 
-                            className="hidden" 
-                            onChange={handleThumbnailUpload}
-                            accept="image/*"
-                          />
-                          <Button variant="outline" type="button">
-                            <Upload className="mr-2 h-4 w-4" /> {thumbnailPreviewUrl ? 'Modifier' : 'Ajouter'}
-                          </Button>
-                        </label>
+                        <Button 
+                          variant="outline" 
+                          type="button" 
+                          onClick={triggerThumbnailInput}
+                        >
+                          <Upload className="mr-2 h-4 w-4" /> {thumbnailPreviewUrl ? 'Modifier' : 'Ajouter'}
+                        </Button>
+                        <Input 
+                          ref={thumbnailInputRef}
+                          type="file" 
+                          className="hidden" 
+                          onChange={handleThumbnailUpload}
+                          accept="image/*"
+                        />
                         {thumbnailPreviewUrl && (
                           <Button 
                             variant="destructive" 
