@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import SpotsList from "./pages/SpotsList";
 import SpotsListSupabase from "./pages/SpotsListSupabase";
 import AddEditSpot from "./pages/AddEditSpot";
+import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/spots-mock" element={<SpotsList />} />
             <Route path="/spots/new" element={<AddEditSpot />} />
             <Route path="/spots/:id" element={<AddEditSpot />} />
+            <Route path="/categories" element={<Categories />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
