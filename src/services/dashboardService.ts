@@ -24,65 +24,79 @@ export interface DashboardStats {
 
 export const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {
+    console.log("Fetching dashboard stats...");
+    
     // Fetch total videos count
-    const { count: totalVideos, error: videosError } = await supabase
+    const videosResult = await supabase
       .from('videos')
       .select('*', { count: 'exact', head: true });
     
-    if (videosError) {
-      console.error("Error fetching videos count:", videosError);
-      throw videosError;
+    if (videosResult.error) {
+      console.error("Error fetching videos count:", videosResult.error);
+      throw videosResult.error;
     }
     
+    const totalVideos = videosResult.count || 0;
+    console.log(`Total videos: ${totalVideos}`);
+    
     // Fetch unique clients count
-    const { data: clients, error: clientsError } = await supabase
+    const clientsResult = await supabase
       .from('videos')
       .select('client')
       .not('client', 'is', null);
     
-    if (clientsError) {
-      console.error("Error fetching clients:", clientsError);
-      throw clientsError;
+    if (clientsResult.error) {
+      console.error("Error fetching clients:", clientsResult.error);
+      throw clientsResult.error;
     }
     
     // Get unique client count
-    const uniqueClients = new Set(clients.map(video => video.client));
+    const uniqueClients = new Set(clientsResult.data?.map(video => video.client) || []);
+    console.log(`Total unique clients: ${uniqueClients.size}`);
     
     // Fetch categories count
-    const { count: totalCategories, error: categoriesError } = await supabase
+    const categoriesResult = await supabase
       .from('video_categories')
       .select('*', { count: 'exact', head: true });
     
-    if (categoriesError) {
-      console.error("Error fetching categories count:", categoriesError);
-      throw categoriesError;
+    if (categoriesResult.error) {
+      console.error("Error fetching categories count:", categoriesResult.error);
+      throw categoriesResult.error;
     }
+    
+    const totalCategories = categoriesResult.count || 0;
+    console.log(`Total categories: ${totalCategories}`);
     
     // Fetch recent videos (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    const { data: recentVideosData, error: recentVideosError } = await supabase
+    const recentVideosResult = await supabase
       .from('videos')
       .select('*')
       .gt('created_at', thirtyDaysAgo.toISOString());
     
-    if (recentVideosError) {
-      console.error("Error fetching recent videos:", recentVideosError);
-      throw recentVideosError;
+    if (recentVideosResult.error) {
+      console.error("Error fetching recent videos:", recentVideosResult.error);
+      throw recentVideosResult.error;
     }
     
+    const recentVideosCount = recentVideosResult.data?.length || 0;
+    console.log(`Recent videos (30 days): ${recentVideosCount}`);
+    
     // Fetch most recent videos for the spots section
-    const { data: recentSpots, error: recentSpotsError } = await supabase
+    const recentSpotsResult = await supabase
       .from('videos')
       .select('id, title, thumbnail_url, created_at')
       .order('created_at', { ascending: false })
       .limit(5);
     
-    if (recentSpotsError) {
-      console.error("Error fetching recent spots:", recentSpotsError);
-      throw recentSpotsError;
+    if (recentSpotsResult.error) {
+      console.error("Error fetching recent spots:", recentSpotsResult.error);
+      throw recentSpotsResult.error;
     }
+    
+    console.log(`Recent spots fetched: ${recentSpotsResult.data?.length || 0}`);
     
     // Generate mock activity for now (this would typically come from a dedicated activities table)
     const recentActivity = [
@@ -94,18 +108,18 @@ export const fetchDashboardStats = async (): Promise<DashboardStats> => {
     ];
     
     // Transform recent spots data to match the expected format
-    const formattedRecentSpots = recentSpots.map(spot => ({
+    const formattedRecentSpots = recentSpotsResult.data?.map(spot => ({
       id: spot.id,
-      title: spot.title,
+      title: spot.title || "Sans titre",
       thumbnailUrl: spot.thumbnail_url,
       createdAt: spot.created_at ? new Date(spot.created_at).toLocaleDateString() : "Date inconnue",
-    }));
+    })) || [];
     
     return {
-      totalVideos: totalVideos || 0,
+      totalVideos,
       totalClients: uniqueClients.size,
-      totalCategories: totalCategories || 0,
-      recentVideos: recentVideosData?.length || 0,
+      totalCategories,
+      recentVideos: recentVideosCount,
       recentActivity,
       recentSpots: formattedRecentSpots,
     };

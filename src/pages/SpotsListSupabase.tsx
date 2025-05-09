@@ -11,20 +11,29 @@ import { Link } from 'react-router-dom';
 import { VideoCard } from '@/components/spots/VideoCard';
 import { fetchVideos, fetchVideoCategories, SpotDisplay, VideoCategory, incrementViews } from '@/services/videoService';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 const SpotsListSupabase = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [view, setView] = useState('grid');
 
-  const { data: spots = [], isLoading: spotsLoading } = useQuery({
+  const { data: spots = [], isLoading: spotsLoading, error: spotsError } = useQuery({
     queryKey: ['videos'],
     queryFn: fetchVideos,
+    onError: (error) => {
+      console.error('Error fetching videos:', error);
+      toast.error('Erreur lors du chargement des vidéos');
+    }
   });
 
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['videoCategories'],
     queryFn: fetchVideoCategories,
+    onError: (error) => {
+      console.error('Error fetching video categories:', error);
+      toast.error('Erreur lors du chargement des catégories');
+    }
   });
 
   const filteredSpots = spots.filter(spot => {
@@ -88,12 +97,28 @@ const SpotsListSupabase = () => {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2 text-lg">Chargement des spots...</span>
         </div>
+      ) : spotsError ? (
+        <div className="text-center py-12">
+          <p className="text-red-500 mb-2">Une erreur est survenue lors du chargement des spots</p>
+          <p className="text-muted-foreground">Veuillez rafraîchir la page ou réessayer plus tard</p>
+        </div>
       ) : (
         <Tabs value={view} className="w-full">
           <TabsContent value="grid" className="mt-0">
             {filteredSpots.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                Aucun spot publicitaire ne correspond à votre recherche.
+                {spots.length === 0 ? (
+                  <div>
+                    <p className="mb-4">Aucun spot publicitaire trouvé dans la base de données</p>
+                    <Button asChild>
+                      <Link to="/spots/new">
+                        <Plus className="mr-2 h-4 w-4" /> Ajouter votre premier spot
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  "Aucun spot publicitaire ne correspond à votre recherche."
+                )}
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -109,7 +134,18 @@ const SpotsListSupabase = () => {
               <div className="divide-y">
                 {filteredSpots.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
-                    Aucun spot publicitaire ne correspond à votre recherche.
+                    {spots.length === 0 ? (
+                      <div>
+                        <p className="mb-4">Aucun spot publicitaire trouvé dans la base de données</p>
+                        <Button asChild>
+                          <Link to="/spots/new">
+                            <Plus className="mr-2 h-4 w-4" /> Ajouter votre premier spot
+                          </Link>
+                        </Button>
+                      </div>
+                    ) : (
+                      "Aucun spot publicitaire ne correspond à votre recherche."
+                    )}
                   </div>
                 ) : (
                   filteredSpots.map((spot) => (
@@ -133,7 +169,11 @@ const SpotsListSupabase = () => {
                                 incrementViews(spot.id);
                               }
                               // Ouvrir la vidéo ici
-                              window.open(spot.videoUrl, "_blank");
+                              if (spot.videoUrl) {
+                                window.open(spot.videoUrl, "_blank");
+                              } else {
+                                toast.error("URL de vidéo non disponible");
+                              }
                             }}>
                               <Play className="h-4 w-4" />
                             </Button>

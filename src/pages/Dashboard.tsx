@@ -1,38 +1,35 @@
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Film, PlayCircle, Users } from 'lucide-react';
-import { fetchDashboardStats, DashboardStats } from '@/services/dashboardService';
+import { Eye, Film, PlayCircle, Users, AlertCircle } from 'lucide-react';
+import { fetchDashboardStats } from '@/services/dashboardService';
 import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: fetchDashboardStats,
+  });
 
-  useEffect(() => {
-    const loadStats = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchDashboardStats();
-        setStats(data);
-      } catch (error) {
-        console.error('Failed to load dashboard stats:', error);
-        toast.error('Erreur lors du chargement des statistiques');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStats();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="ml-2 text-lg">Chargement des statistiques...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Erreur de chargement</h2>
+        <p className="text-muted-foreground mb-4">Impossible de charger les statistiques du tableau de bord.</p>
+        <Button onClick={() => window.location.reload()}>Réessayer</Button>
       </div>
     );
   }
@@ -51,7 +48,7 @@ const Dashboard = () => {
             <Film className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalVideos}</div>
+            <div className="text-2xl font-bold">{stats?.totalVideos || 0}</div>
             <p className="text-xs text-muted-foreground">Spots publicitaires</p>
           </CardContent>
         </Card>
@@ -61,7 +58,7 @@ const Dashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalClients}</div>
+            <div className="text-2xl font-bold">{stats?.totalClients || 0}</div>
             <p className="text-xs text-muted-foreground">Annonceurs uniques</p>
           </CardContent>
         </Card>
@@ -71,7 +68,7 @@ const Dashboard = () => {
             <PlayCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalCategories}</div>
+            <div className="text-2xl font-bold">{stats?.totalCategories || 0}</div>
             <p className="text-xs text-muted-foreground">Types de publicités</p>
           </CardContent>
         </Card>
@@ -81,7 +78,7 @@ const Dashboard = () => {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.recentVideos}</div>
+            <div className="text-2xl font-bold">{stats?.recentVideos || 0}</div>
             <p className="text-xs text-muted-foreground">Derniers 30 jours</p>
           </CardContent>
         </Card>
@@ -118,9 +115,17 @@ const Dashboard = () => {
                 </Card>
               ))
             ) : (
-              <p className="col-span-3 text-center py-8 text-muted-foreground">
-                Aucun spot récent trouvé
-              </p>
+              <div className="col-span-3">
+                <Card className="flex flex-col items-center justify-center p-8">
+                  <Film className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-center mb-4">Aucun spot récent trouvé</p>
+                  <Button asChild>
+                    <Link to="/spots/new">
+                      Ajouter un nouveau spot
+                    </Link>
+                  </Button>
+                </Card>
+              </div>
             )}
           </div>
         </TabsContent>

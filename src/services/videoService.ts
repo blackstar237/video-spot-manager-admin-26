@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -40,6 +41,8 @@ export interface SpotDisplay {
 
 export const fetchVideos = async (): Promise<SpotDisplay[]> => {
   try {
+    console.log("Fetching videos...");
+    
     const { data: videos, error } = await supabase
       .from('videos')
       .select(`
@@ -50,6 +53,13 @@ export const fetchVideos = async (): Promise<SpotDisplay[]> => {
     if (error) {
       console.error("Error fetching videos:", error);
       toast.error("Erreur lors du chargement des vidéos");
+      return [];
+    }
+
+    console.log(`Fetched ${videos?.length || 0} videos from database`);
+    
+    if (!videos || videos.length === 0) {
+      console.log("No videos found in the database");
       return [];
     }
 
@@ -76,6 +86,8 @@ export const fetchVideos = async (): Promise<SpotDisplay[]> => {
 
 export const fetchVideoCategories = async (): Promise<VideoCategory[]> => {
   try {
+    console.log("Fetching video categories...");
+    
     const { data, error } = await supabase
       .from('video_categories')
       .select('*');
@@ -86,7 +98,8 @@ export const fetchVideoCategories = async (): Promise<VideoCategory[]> => {
       return [];
     }
 
-    return data;
+    console.log(`Fetched ${data?.length || 0} categories from database`);
+    return data || [];
   } catch (error) {
     console.error("Unexpected error:", error);
     toast.error("Une erreur inattendue s'est produite");
