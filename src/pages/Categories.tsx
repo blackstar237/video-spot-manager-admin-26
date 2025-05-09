@@ -1,181 +1,248 @@
 
-import React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { PlusCircle, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+  DialogClose
+} from '@/components/ui/dialog';
+import { useForm } from 'react-hook-form';
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { fetchVideoCategories, createCategory, deleteCategory, VideoCategory } from '@/services/categoryService';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { fetchVideoCategories, createCategory, deleteCategory } from "@/services/categoryService";
-import { VideoCategory } from "@/services/videoService";
+const categorySchema = z.object({
+  name: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères" }),
+  slug: z.string().min(2, { message: "Le slug doit contenir au moins 2 caractères" }),
+  description: z.string().optional(),
+});
 
 const Categories = () => {
-  const queryClient = useQueryClient();
-  const [newCategory, setNewCategory] = React.useState({
-    name: "",
-    slug: "",
-    description: "",
-  });
+  const [categories, setCategories] = useState<VideoCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   
-  const { data: categories = [], isLoading } = useQuery({
-    queryKey: ["categories"],
-    queryFn: fetchVideoCategories,
+  const form = useForm<z.infer<typeof categorySchema>>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: '',
+      slug: '',
+      description: '',
+    },
   });
 
-  const createMutation = useMutation({
-    mutationFn: createCategory,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+  const loadCategories = async () => {
+    try {
+      const data = await fetchVideoCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      toast.error("Erreur lors du chargement des catégories");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const onSubmit = async (data: z.infer<typeof categorySchema>) => {
+    try {
+      await createCategory({
+        name: data.name,
+        slug: data.slug,
+        description: data.description || undefined
+      });
+      
       toast.success("Catégorie créée avec succès");
-      setNewCategory({ name: "", slug: "", description: "" });
-    },
-    onError: (error) => {
-      console.error("Erreur lors de la création de la catégorie:", error);
+      form.reset();
+      setDialogOpen(false);
+      loadCategories();
+    } catch (error) {
+      console.error('Error creating category:', error);
       toast.error("Erreur lors de la création de la catégorie");
     }
-  });
+  };
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteCategory,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+  const handleDeleteCategory = async (id: string) => {
+    if (!id) return;
+    
+    setDeleting(id);
+    try {
+      await deleteCategory(id);
       toast.success("Catégorie supprimée avec succès");
-    },
-    onError: (error) => {
-      console.error("Erreur lors de la suppression de la catégorie:", error);
+      loadCategories();
+    } catch (error) {
+      console.error('Error deleting category:', error);
       toast.error("Erreur lors de la suppression de la catégorie");
+    } finally {
+      setDeleting(null);
     }
-  });
-
-  const handleCreateCategory = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCategory.name || !newCategory.slug) {
-      toast.error("Le nom et le slug sont obligatoires");
-      return;
-    }
-    createMutation.mutate(newCategory);
-  };
-
-  const handleDeleteCategory = (id: string) => {
-    if (confirm("Êtes-vous sûr de vouloir supprimer cette catégorie ?")) {
-      deleteMutation.mutate(id);
-    }
-  };
-
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, "")
-      .replace(/[\s_-]+/g, "-")
-      .replace(/^-+|-+$/g, "");
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
-    setNewCategory({
-      ...newCategory,
-      name,
-      slug: generateSlug(name),
-    });
+    form.setValue('name', name);
+    
+    // Auto-generate slug from name
+    const slug = name.toLowerCase()
+      .replace(/\s+/g, '-')           // Replace spaces with -
+      .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+      .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+      .replace(/^-+/, '')             // Trim - from start of text
+      .replace(/-+$/, '');            // Trim - from end of text
+      
+    form.setValue('slug', slug);
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-lg">Chargement des catégories...</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Catégories</h1>
-        <Dialog>
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Catégories</h1>
+          <p className="text-muted-foreground">Gérez les catégories de spots publicitaires</p>
+        </div>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Ajouter une catégorie
+              <Plus className="mr-2 h-4 w-4" /> Ajouter une catégorie
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Nouvelle catégorie</DialogTitle>
+              <DialogTitle>Ajouter une nouvelle catégorie</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleCreateCategory} className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-medium">Nom</label>
-                <Input
-                  id="name"
-                  value={newCategory.name}
-                  onChange={handleNameChange}
-                  placeholder="Nom de la catégorie"
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: Automobile" {...field} onChange={handleNameChange} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="slug" className="text-sm font-medium">Slug</label>
-                <Input
-                  id="slug"
-                  value={newCategory.slug}
-                  onChange={(e) => setNewCategory({ ...newCategory, slug: e.target.value })}
-                  placeholder="slug-de-categorie"
+                <FormField
+                  control={form.control}
+                  name="slug"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Slug</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: automobile" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="description" className="text-sm font-medium">Description</label>
-                <Textarea
-                  id="description"
-                  value={newCategory.description}
-                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
-                  placeholder="Description de la catégorie"
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description (optionnel)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Description de la catégorie" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" type="button">Annuler</Button>
-                </DialogClose>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Création..." : "Créer"}
-                </Button>
-              </DialogFooter>
-            </form>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">Annuler</Button>
+                  </DialogClose>
+                  <Button type="submit">Créer</Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="rounded-md border">
-        {isLoading ? (
-          <div className="py-10 text-center">Chargement des catégories...</div>
-        ) : categories.length === 0 ? (
-          <div className="py-10 text-center">Aucune catégorie disponible</div>
-        ) : (
-          <Table>
-            <TableHeader>
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nom</TableHead>
+              <TableHead>Slug</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {categories.length === 0 ? (
               <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="w-[80px] text-right">Actions</TableHead>
+                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  Aucune catégorie trouvée
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.map((category: VideoCategory) => (
+            ) : (
+              categories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
                   <TableCell>{category.slug}</TableCell>
-                  <TableCell>{category.description || "-"}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>{category.description || '-'}</TableCell>
+                  <TableCell>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteCategory(category.id)}
-                      disabled={deleteMutation.isPending}
+                      disabled={deleting === category.id}
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      {deleting === category.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      )}
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 };

@@ -1,157 +1,155 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUp, Video, Users, Clock, Tag } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Eye, Film, PlayCircle, Users } from 'lucide-react';
 import { fetchDashboardStats, DashboardStats } from '@/services/dashboardService';
-import { useQuery } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
-  // Utilisation de React Query pour gérer les données et leur état
-  const { data: stats, isLoading, isError } = useQuery({
-    queryKey: ['dashboardStats'],
-    queryFn: fetchDashboardStats,
-  });
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Créer un tableau de statistiques basé sur les données
-  const dashboardStats = [
-    { 
-      title: 'Spots Totaux', 
-      value: isLoading ? '...' : `${stats?.totalVideos || 0}`, 
-      icon: Video, 
-      increase: stats?.totalVideos ? '↑' : '' 
-    },
-    { 
-      title: 'Clients', 
-      value: isLoading ? '...' : `${stats?.totalClients || 0}`, 
-      icon: Users, 
-      increase: stats?.totalClients ? '↑' : ''
-    },
-    { 
-      title: 'Catégories', 
-      value: isLoading ? '...' : `${stats?.totalCategories || 0}`, 
-      icon: Tag, 
-      increase: ''
-    },
-    { 
-      title: 'Spots cette semaine', 
-      value: isLoading ? '...' : `${stats?.recentVideos || 0}`, 
-      icon: Clock, 
-      increase: stats?.recentVideos ? '↑' : ''
-    },
-  ];
+  useEffect(() => {
+    const loadStats = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Failed to load dashboard stats:', error);
+        toast.error('Erreur lors du chargement des statistiques');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-lg">Chargement des statistiques...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold">Tableau de bord</h1>
-        <p className="text-muted-foreground">Bienvenue dans votre espace d'administration de spots publicitaires.</p>
+        <p className="text-muted-foreground">Vue d'ensemble et statistiques récentes</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {dashboardStats.map((stat, i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className="text-3xl font-bold">{stat.value}</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <stat.icon className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-              {stat.increase && (
-                <div className="mt-4 flex items-center text-xs text-green-600">
-                  <ArrowUp className="mr-1 h-3 w-3" />
-                  <span>{stat.increase}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Activité récente</CardTitle>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Spots</CardTitle>
+            <Film className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="space-y-4">
-                <p>Chargement des activités récentes...</p>
-              </div>
-            ) : isError ? (
-              <div className="space-y-4">
-                <p>Erreur lors du chargement des activités récentes.</p>
-              </div>
-            ) : stats?.recentActivity.length === 0 ? (
-              <div className="space-y-4">
-                <p>Aucune activité récente à afficher.</p>
-              </div>
+            <div className="text-2xl font-bold">{stats?.totalVideos}</div>
+            <p className="text-xs text-muted-foreground">Spots publicitaires</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalClients}</div>
+            <p className="text-xs text-muted-foreground">Annonceurs uniques</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Catégories</CardTitle>
+            <PlayCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalCategories}</div>
+            <p className="text-xs text-muted-foreground">Types de publicités</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Récents (30j)</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.recentVideos}</div>
+            <p className="text-xs text-muted-foreground">Derniers 30 jours</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="recent">
+        <TabsList>
+          <TabsTrigger value="recent">Récents</TabsTrigger>
+          <TabsTrigger value="activity">Activité</TabsTrigger>
+        </TabsList>
+        <TabsContent value="recent" className="space-y-4">
+          <h2 className="text-xl font-semibold">Spots récents</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {stats?.recentSpots && stats.recentSpots.length > 0 ? (
+              stats.recentSpots.map((spot) => (
+                <Card key={spot.id} className="overflow-hidden">
+                  <div className="h-32 bg-muted">
+                    {spot.thumbnailUrl ? (
+                      <img
+                        src={spot.thumbnailUrl}
+                        alt={spot.title}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Film className="h-10 w-10 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold truncate">{spot.title}</h3>
+                    <p className="text-sm text-muted-foreground">{spot.createdAt}</p>
+                  </CardContent>
+                </Card>
+              ))
             ) : (
-              <div className="space-y-4">
-                {stats?.recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-4 pb-4 border-b last:border-0">
-                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                      {activity.user.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-medium">{activity.action}: {activity.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Par {activity.user} · {activity.time}
+              <p className="col-span-3 text-center py-8 text-muted-foreground">
+                Aucun spot récent trouvé
+              </p>
+            )}
+          </div>
+        </TabsContent>
+        <TabsContent value="activity" className="space-y-4">
+          <h2 className="text-xl font-semibold">Activité récente</h2>
+          <Card>
+            {stats?.recentActivity && stats.recentActivity.length > 0 ? (
+              <ul className="divide-y">
+                {stats.recentActivity.map((activity) => (
+                  <li key={activity.id} className="flex items-center p-4">
+                    <div className="ml-4">
+                      <p className="text-sm">
+                        <span className="font-medium">{activity.user}</span>{' '}
+                        <span className="text-muted-foreground">{activity.action}</span>{' '}
+                        <span className="font-medium">{activity.title}</span>
                       </p>
+                      <p className="text-xs text-muted-foreground">{activity.time}</p>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Spots récents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-4">
-                <p>Chargement des spots récents...</p>
-              </div>
-            ) : isError ? (
-              <div className="space-y-4">
-                <p>Erreur lors du chargement des spots récents.</p>
-              </div>
-            ) : stats?.recentSpots.length === 0 ? (
-              <div className="space-y-4">
-                <p>Aucun spot récent à afficher.</p>
-              </div>
+              </ul>
             ) : (
-              <div className="space-y-4">
-                {stats?.recentSpots.map((spot) => (
-                  <div key={spot.id} className="flex gap-3 items-center">
-                    <div className="w-16 h-10 bg-muted rounded-md flex items-center justify-center overflow-hidden">
-                      {spot.thumbnailUrl ? (
-                        <img 
-                          src={spot.thumbnailUrl} 
-                          alt={spot.title}
-                          className="w-full h-full object-cover" 
-                        />
-                      ) : (
-                        <Video className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">{spot.title}</p>
-                      <p className="text-xs text-muted-foreground">Ajouté le {spot.createdAt}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p className="text-center py-8 text-muted-foreground">
+                Aucune activité récente trouvée
+              </p>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

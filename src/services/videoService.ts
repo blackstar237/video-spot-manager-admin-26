@@ -56,7 +56,7 @@ export const fetchVideos = async (): Promise<SpotDisplay[]> => {
     // Transform Supabase data to match our app's format
     return videos.map(video => ({
       id: video.id,
-      title: video.title,
+      title: video.title || "Sans titre",
       client: video.client || "Client non spécifié",
       duration: video.duration || "0s",
       category: video.video_categories?.name || "Non catégorisé",
@@ -68,8 +68,8 @@ export const fetchVideos = async (): Promise<SpotDisplay[]> => {
       description: video.description
     }));
   } catch (error) {
-    console.error("Unexpected error:", error);
-    toast.error("Une erreur inattendue s'est produite");
+    console.error("Unexpected error in fetchVideos:", error);
+    toast.error("Une erreur inattendue s'est produite lors du chargement des vidéos");
     return [];
   }
 };
