@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,10 +23,6 @@ const SpotsListSupabase = () => {
       onSuccess: (data: SpotDisplay[]) => {
         console.log('Videos loaded successfully:', data.length);
       },
-      onError: (error: Error) => {
-        console.error('Error fetching videos:', error);
-        toast.error('Erreur lors du chargement des vidéos');
-      }
     }
   });
 
@@ -37,19 +34,26 @@ const SpotsListSupabase = () => {
       onSuccess: (data: VideoCategory[]) => {
         console.log('Categories loaded successfully:', data.length);
       },
-      onError: (error: Error) => {
-        console.error('Error fetching video categories:', error);
-        toast.error('Erreur lors du chargement des catégories');
-      }
     }
   });
+
+  // Log any errors
+  if (spotsError) {
+    console.error('Error fetching videos:', spotsError);
+    toast.error('Erreur lors du chargement des vidéos');
+  }
+  
+  if (categoriesError) {
+    console.error('Error fetching categories:', categoriesError);
+    toast.error('Erreur lors du chargement des catégories');
+  }
 
   const filteredSpots = spots
     ? spots.filter((spot) => {
         const searchRegex = new RegExp(searchTerm, 'i');
         const matchesSearch = searchRegex.test(spot.title) || searchRegex.test(spot.description || '');
 
-        const matchesCategory = selectedCategory === 'all' || spot.category_id === selectedCategory;
+        const matchesCategory = selectedCategory === 'all' || spot.categoryId === selectedCategory;
 
         return matchesSearch && matchesCategory;
       })

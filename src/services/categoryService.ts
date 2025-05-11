@@ -59,6 +59,35 @@ export const createCategory = async (category: {
   }
 };
 
+export const updateCategory = async (id: string, category: {
+  name: string;
+  slug: string;
+  description?: string | null;
+  banner_url?: string | null;
+}): Promise<VideoCategory | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('video_categories')
+      .update(category)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating category:", error);
+      toast.error("Erreur lors de la mise à jour de la catégorie");
+      return null;
+    }
+
+    toast.success("Catégorie mise à jour avec succès");
+    return data;
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    toast.error("Une erreur inattendue s'est produite");
+    return null;
+  }
+};
+
 export const deleteCategory = async (id: string): Promise<boolean> => {
   try {
     const { error } = await supabase
