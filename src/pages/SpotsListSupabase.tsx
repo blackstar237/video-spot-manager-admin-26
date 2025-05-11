@@ -1,223 +1,109 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Plus, Search, Calendar, Tag, Clock, Video as VideoIcon, Loader2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
-import { VideoCard } from '@/components/spots/VideoCard';
-import { fetchVideos, fetchVideoCategories, SpotDisplay, VideoCategory, incrementViews } from '@/services/videoService';
 import { useQuery } from '@tanstack/react-query';
+import { fetchVideos, SpotDisplay } from '@/services/videoService';
+import { fetchCategories, VideoCategory } from '@/services/categoryService';
+import { VideoCard } from '@/components/spots/VideoCard';
+import { SheetTrigger } from '@/components/ui/sheet';
+import { Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SpotsListSupabase = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [view, setView] = useState('grid');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
+  // Fetch videos with React Query
   const { data: spots = [], isLoading: spotsLoading, error: spotsError } = useQuery({
     queryKey: ['videos'],
     queryFn: fetchVideos,
-    onSuccess: (data) => {
-      console.log('Videos loaded successfully:', data.length);
-    },
-    onError: (error) => {
-      console.error('Error fetching videos:', error);
-      toast.error('Erreur lors du chargement des vidéos');
+    meta: {
+      onSuccess: (data: SpotDisplay[]) => {
+        console.log('Videos loaded successfully:', data.length);
+      },
+      onError: (error: Error) => {
+        console.error('Error fetching videos:', error);
+        toast.error('Erreur lors du chargement des vidéos');
+      }
     }
   });
 
+  // Fetch categories with React Query
   const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['videoCategories'],
-    queryFn: fetchVideoCategories,
-    onSuccess: (data) => {
-      console.log('Categories loaded successfully:', data.length);
-    },
-    onError: (error) => {
-      console.error('Error fetching video categories:', error);
-      toast.error('Erreur lors du chargement des catégories');
+    queryFn: fetchCategories,
+    meta: {
+      onSuccess: (data: VideoCategory[]) => {
+        console.log('Categories loaded successfully:', data.length);
+      },
+      onError: (error: Error) => {
+        console.error('Error fetching video categories:', error);
+        toast.error('Erreur lors du chargement des catégories');
+      }
     }
   });
 
-  const filteredSpots = spots.filter(spot => {
-    const matchesSearch = spot.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (spot.client && spot.client.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = selectedCategory === 'all' || spot.categoryId === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
+  const filteredSpots = spots
+    ? spots.filter((spot) => {
+        const searchRegex = new RegExp(searchTerm, 'i');
+        const matchesSearch = searchRegex.test(spot.title) || searchRegex.test(spot.description || '');
+
+        const matchesCategory = selectedCategory === 'all' || spot.category_id === selectedCategory;
+
+        return matchesSearch && matchesCategory;
+      })
+    : [];
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCategory(e.target.value);
+  };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Spots publicitaires</h1>
-          <p className="text-muted-foreground">Gérez tous vos spots publicitaires</p>
-        </div>
-        <Button asChild>
-          <Link to="/spots/new">
-            <Plus className="mr-2 h-4 w-4" /> Ajouter un spot
-          </Link>
-        </Button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Liste des Spots</h1>
+        <SheetTrigger className="text-sm hover:bg-secondary/50 rounded-md px-2 py-1">
+          <Filter className="w-4 h-4 mr-2 inline-block" />
+          <span>Filtres</span>
+        </SheetTrigger>
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 gap-4 items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Rechercher un spot..." 
-              className="pl-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Catégorie" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les catégories</SelectItem>
-              {categories.map((category: VideoCategory) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <Tabs defaultValue="grid" className="w-auto" value={view} onValueChange={setView}>
-          <TabsList>
-            <TabsTrigger value="grid">Grille</TabsTrigger>
-            <TabsTrigger value="list">Liste</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <div className="flex space-x-4">
+        <Input
+          type="text"
+          placeholder="Rechercher un spot..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
+        <select
+          className="border rounded px-2 py-1"
+          value={selectedCategory}
+          onChange={handleCategoryChange}
+        >
+          <option value="all">Toutes les catégories</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {spotsLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2 text-lg">Chargement des spots...</span>
-        </div>
+        <p>Chargement des spots...</p>
       ) : spotsError ? (
-        <div className="text-center py-12">
-          <p className="text-red-500 mb-2">Une erreur est survenue lors du chargement des spots</p>
-          <p className="text-muted-foreground">Veuillez rafraîchir la page ou réessayer plus tard</p>
-        </div>
+        <p>Erreur lors du chargement des spots.</p>
       ) : (
-        <Tabs value={view} className="w-full">
-          <TabsContent value="grid" className="mt-0">
-            {filteredSpots.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                {spots.length === 0 ? (
-                  <div>
-                    <p className="mb-4">Aucun spot publicitaire trouvé dans la base de données</p>
-                    <Button asChild>
-                      <Link to="/spots/new">
-                        <Plus className="mr-2 h-4 w-4" /> Ajouter votre premier spot
-                      </Link>
-                    </Button>
-                  </div>
-                ) : (
-                  "Aucun spot publicitaire ne correspond à votre recherche."
-                )}
-              </div>
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredSpots.map((spot) => (
-                  <VideoCard key={spot.id} spot={spot} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="list" className="mt-0">
-            <Card>
-              <div className="divide-y">
-                {filteredSpots.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    {spots.length === 0 ? (
-                      <div>
-                        <p className="mb-4">Aucun spot publicitaire trouvé dans la base de données</p>
-                        <Button asChild>
-                          <Link to="/spots/new">
-                            <Plus className="mr-2 h-4 w-4" /> Ajouter votre premier spot
-                          </Link>
-                        </Button>
-                      </div>
-                    ) : (
-                      "Aucun spot publicitaire ne correspond à votre recherche."
-                    )}
-                  </div>
-                ) : (
-                  filteredSpots.map((spot) => (
-                    <div key={spot.id} className="p-4 hover:bg-muted/50 transition-colors">
-                      <div className="flex gap-4 items-center">
-                        <div className="w-24 h-16 relative rounded overflow-hidden bg-muted">
-                          {spot.thumbnailUrl ? (
-                            <img 
-                              src={spot.thumbnailUrl} 
-                              alt={spot.title} 
-                              className="object-cover w-full h-full"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center w-full h-full">
-                              <VideoIcon className="h-6 w-6 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                            <Button variant="outline" size="icon" className="h-8 w-8 bg-white/80" onClick={() => {
-                              if (spot.id) {
-                                incrementViews(spot.id);
-                              }
-                              // Ouvrir la vidéo ici
-                              if (spot.videoUrl) {
-                                window.open(spot.videoUrl, "_blank");
-                              } else {
-                                toast.error("URL de vidéo non disponible");
-                              }
-                            }}>
-                              <Play className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <Link to={`/spots/${spot.id}`} className="font-medium hover:underline">
-                            {spot.title}
-                          </Link>
-                          <p className="text-sm text-muted-foreground">{spot.client}</p>
-                          <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                            <div className="flex items-center">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {spot.createdAt}
-                            </div>
-                            <div className="flex items-center">
-                              <Tag className="h-3 w-3 mr-1" />
-                              {spot.category}
-                            </div>
-                            <div className="flex items-center">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {spot.duration}
-                            </div>
-                          </div>
-                        </div>
-                        <Badge variant={
-                          spot.status === 'Publié' ? 'default' : 
-                          spot.status === 'En attente' ? 'outline' : 'secondary'
-                        }>
-                          {spot.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <Card className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {filteredSpots.map((spot) => (
+            <VideoCard key={spot.id} spot={spot} />
+          ))}
+        </Card>
       )}
     </div>
   );

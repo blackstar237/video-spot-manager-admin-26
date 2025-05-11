@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Upload } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -34,11 +34,13 @@ import {
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { fetchCategories, createCategory, deleteCategory, VideoCategory } from '@/services/categoryService';
+import { supabase } from "@/integrations/supabase/client";
 
 const categorySchema = z.object({
   name: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères" }),
   slug: z.string().min(2, { message: "Le slug doit contenir au moins 2 caractères" }),
   description: z.string().optional(),
+  banner_url: z.string().optional(),
 });
 
 const Categories = () => {
@@ -46,6 +48,9 @@ const Categories = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof categorySchema>>({
     resolver: zodResolver(categorySchema),
@@ -53,6 +58,7 @@ const Categories = () => {
       name: '',
       slug: '',
       description: '',
+      banner_url: '',
     },
   });
 
@@ -77,11 +83,13 @@ const Categories = () => {
       await createCategory({
         name: data.name,
         slug: data.slug,
-        description: data.description || undefined
+        description: data.description || undefined,
+        banner_url: data.banner_url || undefined
       });
       
       toast.success("Catégorie créée avec succès");
       form.reset();
+      setBannerPreview(null);
       setDialogOpen(false);
       loadCategories();
     } catch (error) {
@@ -121,6 +129,59 @@ const Categories = () => {
     form.setValue('slug', slug);
   };
 
+  const handleBannerUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast.error("Le fichier sélectionné n'est pas une image");
+      return;
+    }
+
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("L'image est trop volumineuse. Taille maximale: 2MB");
+      return;
+    }
+
+    setUploadingBanner(true);
+    
+    try {
+      // Create preview URL
+      const objectUrl = URL.createObjectURL(file);
+      setBannerPreview(objectUrl);
+
+      // Upload to Supabase Storage
+      const fileName = `${Date.now()}-${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('categories')
+        .upload(`banners/${fileName}`, file);
+
+      if (error) {
+        throw error;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('categories')
+        .getPublicUrl(`banners/${fileName}`);
+
+      form.setValue('banner_url', publicUrl);
+      toast.success("Image téléchargée avec succès");
+    } catch (error) {
+      console.error('Error uploading banner:', error);
+      toast.error("Erreur lors du téléchargement de l'image");
+      setBannerPreview(null);
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -143,7 +204,7 @@ const Categories = () => {
               <Plus className="mr-2 h-4 w-4" /> Ajouter une catégorie
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Ajouter une nouvelle catégorie</DialogTitle>
             </DialogHeader>
@@ -188,11 +249,62 @@ const Categories = () => {
                     </FormItem>
                   )}
                 />
-                <DialogFooter>
+                <FormField
+                  control={form.control}
+                  name="banner_url"
+                  render={({ field: { value, onChange, ...field } }) => (
+                    <FormItem>
+                      <FormLabel>Bannière (optionnel)</FormLabel>
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          accept="image/*"
+                          onChange={handleBannerUpload}
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={triggerFileInput}
+                          disabled={uploadingBanner}
+                          className="w-full"
+                        >
+                          {uploadingBanner ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Téléchargement...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="mr-2 h-4 w-4" />
+                              Choisir une image
+                            </>
+                          )}
+                        </Button>
+                        
+                        {bannerPreview && (
+                          <div className="mt-2">
+                            <p className="text-sm text-muted-foreground mb-2">Aperçu:</p>
+                            <img
+                              src={bannerPreview}
+                              alt="Aperçu de la bannière"
+                              className="rounded-md object-cover h-32 w-full"
+                            />
+                          </div>
+                        )}
+                        <input type="hidden" {...field} value={value} onChange={onChange} />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <DialogFooter className="mt-6">
                   <DialogClose asChild>
                     <Button type="button" variant="outline">Annuler</Button>
                   </DialogClose>
-                  <Button type="submit">Créer</Button>
+                  <Button type="submit" disabled={uploadingBanner}>Créer</Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -207,13 +319,14 @@ const Categories = () => {
               <TableHead>Nom</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead>Bannière</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {categories.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   Aucune catégorie trouvée
                 </TableCell>
               </TableRow>
@@ -223,6 +336,17 @@ const Categories = () => {
                   <TableCell className="font-medium">{category.name}</TableCell>
                   <TableCell>{category.slug}</TableCell>
                   <TableCell>{category.description || '-'}</TableCell>
+                  <TableCell>
+                    {category.banner_url ? (
+                      <img 
+                        src={category.banner_url} 
+                        alt={`Bannière ${category.name}`} 
+                        className="w-16 h-10 object-cover rounded"
+                      />
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
