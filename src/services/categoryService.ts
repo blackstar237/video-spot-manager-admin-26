@@ -109,3 +109,33 @@ export const deleteCategory = async (id: string): Promise<boolean> => {
     return false;
   }
 };
+
+// Fonction pour uploader une image de bannière
+export const uploadCategoryBanner = async (file: File): Promise<string | null> => {
+  try {
+    // Création d'un nom de fichier unique
+    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+    
+    // Upload du fichier dans le bucket "categories"
+    const { data, error } = await supabase.storage
+      .from('categories')
+      .upload(`banners/${fileName}`, file);
+
+    if (error) {
+      console.error("Error uploading banner:", error);
+      toast.error("Erreur lors du téléchargement de l'image");
+      return null;
+    }
+
+    // Récupération de l'URL publique
+    const { data: { publicUrl } } = supabase.storage
+      .from('categories')
+      .getPublicUrl(`banners/${fileName}`);
+
+    return publicUrl;
+  } catch (error) {
+    console.error("Unexpected error during upload:", error);
+    toast.error("Une erreur inattendue s'est produite");
+    return null;
+  }
+};

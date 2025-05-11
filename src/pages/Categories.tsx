@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,8 +32,14 @@ import {
 } from '@/components/ui/form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { fetchCategories, createCategory, updateCategory, deleteCategory, VideoCategory } from '@/services/categoryService';
-import { supabase } from "@/integrations/supabase/client";
+import { 
+  fetchCategories, 
+  createCategory, 
+  updateCategory, 
+  deleteCategory, 
+  uploadCategoryBanner,
+  VideoCategory 
+} from '@/services/categoryService';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -215,23 +220,16 @@ const Categories = () => {
       const objectUrl = URL.createObjectURL(file);
       setBannerPreview(objectUrl);
 
-      // Upload to Supabase Storage
-      const fileName = `${Date.now()}-${file.name}`;
-      const { data, error } = await supabase.storage
-        .from('categories')
-        .upload(`banners/${fileName}`, file);
-
-      if (error) {
-        throw error;
+      // Utiliser la fonction dédiée pour uploader l'image
+      const publicUrl = await uploadCategoryBanner(file);
+      
+      if (publicUrl) {
+        form.setValue('banner_url', publicUrl);
+        toast.success("Image téléchargée avec succès");
+      } else {
+        // En cas d'erreur, on réinitialise l'aperçu
+        setBannerPreview(null);
       }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('categories')
-        .getPublicUrl(`banners/${fileName}`);
-
-      form.setValue('banner_url', publicUrl);
-      toast.success("Image téléchargée avec succès");
     } catch (error) {
       console.error('Error uploading banner:', error);
       toast.error("Erreur lors du téléchargement de l'image");
