@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { fetchVideoCategories, createCategory, deleteCategory, VideoCategory } from '@/services/categoryService';
+import { fetchCategories, createCategory, deleteCategory, VideoCategory } from '@/services/categoryService';
 
 const categorySchema = z.object({
   name: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères" }),
@@ -58,7 +58,7 @@ const Categories = () => {
 
   const loadCategories = async () => {
     try {
-      const data = await fetchVideoCategories();
+      const data = await fetchCategories();
       setCategories(data);
     } catch (error) {
       console.error('Error loading categories:', error);

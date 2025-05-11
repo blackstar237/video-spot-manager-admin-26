@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,9 @@ const SpotsListSupabase = () => {
   const { data: spots = [], isLoading: spotsLoading, error: spotsError } = useQuery({
     queryKey: ['videos'],
     queryFn: fetchVideos,
+    onSuccess: (data) => {
+      console.log('Videos loaded successfully:', data.length);
+    },
     onError: (error) => {
       console.error('Error fetching videos:', error);
       toast.error('Erreur lors du chargement des vidéos');
@@ -30,6 +32,9 @@ const SpotsListSupabase = () => {
   const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['videoCategories'],
     queryFn: fetchVideoCategories,
+    onSuccess: (data) => {
+      console.log('Categories loaded successfully:', data.length);
+    },
     onError: (error) => {
       console.error('Error fetching video categories:', error);
       toast.error('Erreur lors du chargement des catégories');
