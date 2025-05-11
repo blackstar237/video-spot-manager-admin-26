@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchVideos, SpotDisplay } from '@/services/videoService';
 import { fetchCategories, VideoCategory } from '@/services/categoryService';
 import { VideoCard } from '@/components/spots/VideoCard';
-import { SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -71,10 +71,19 @@ const SpotsListSupabase = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Liste des Spots</h1>
-        <SheetTrigger className="text-sm hover:bg-secondary/50 rounded-md px-2 py-1">
-          <Filter className="w-4 h-4 mr-2 inline-block" />
-          <span>Filtres</span>
-        </SheetTrigger>
+        <Sheet>
+          <SheetTrigger className="text-sm hover:bg-secondary/50 rounded-md px-2 py-1">
+            <Filter className="w-4 h-4 mr-2 inline-block" />
+            <span>Filtres</span>
+          </SheetTrigger>
+          <SheetContent>
+            <div className="py-4">
+              <h3 className="text-lg font-medium mb-4">Filtres avancés</h3>
+              {/* Contenu des filtres à venir */}
+              <p className="text-muted-foreground">Options de filtrage supplémentaires à implémenter.</p>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <div className="flex space-x-4">
