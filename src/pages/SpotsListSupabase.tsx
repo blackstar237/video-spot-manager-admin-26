@@ -72,9 +72,11 @@ const SpotsListSupabase = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Liste des Spots</h1>
         <Sheet>
-          <SheetTrigger className="text-sm hover:bg-secondary/50 rounded-md px-2 py-1">
-            <Filter className="w-4 h-4 mr-2 inline-block" />
-            <span>Filtres</span>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="text-sm">
+              <Filter className="w-4 h-4 mr-2 inline-block" />
+              <span>Filtres</span>
+            </Button>
           </SheetTrigger>
           <SheetContent>
             <div className="py-4">
@@ -112,10 +114,14 @@ const SpotsListSupabase = () => {
       ) : spotsError ? (
         <p>Erreur lors du chargement des spots.</p>
       ) : (
-        <Card className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filteredSpots.map((spot) => (
-            <VideoCard key={spot.id} spot={spot} />
-          ))}
+        <Card className="p-4 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {filteredSpots.length === 0 ? (
+            <p className="col-span-full text-center text-muted-foreground">Aucun spot trouvé</p>
+          ) : (
+            filteredSpots.map((spot) => (
+              <VideoCard key={spot.id} spot={spot} />
+            ))
+          )}
         </Card>
       )}
     </div>
