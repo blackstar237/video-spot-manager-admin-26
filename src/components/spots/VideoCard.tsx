@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,6 @@ import { Link } from 'react-router-dom';
 import { incrementViews } from '@/services/videoService';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-
 interface VideoCardProps {
   spot: {
     id: string;
@@ -21,32 +19,22 @@ interface VideoCardProps {
     videoUrl?: string;
   };
 }
-
-export const VideoCard = ({ spot }: VideoCardProps) => {
+export const VideoCard = ({
+  spot
+}: VideoCardProps) => {
   const [videoOpen, setVideoOpen] = useState(false);
-
   const handleOpenVideo = () => {
     if (spot.id) {
       incrementViews(spot.id);
     }
     setVideoOpen(true);
   };
-
-  return (
-    <>
+  return <>
       <Card className="video-card overflow-hidden">
         <div className="video-thumbnail relative h-40 bg-muted">
-          {spot.thumbnailUrl ? (
-            <img 
-              src={spot.thumbnailUrl} 
-              alt={spot.title} 
-              className="object-cover w-full h-full"
-            />
-          ) : (
-            <div className="flex items-center justify-center w-full h-full">
+          {spot.thumbnailUrl ? <img src={spot.thumbnailUrl} alt={spot.title} className="object-cover w-full h-full" /> : <div className="flex items-center justify-center w-full h-full">
               <Play className="h-8 w-8 text-muted-foreground" />
-            </div>
-          )}
+            </div>}
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
             <Button variant="outline" size="icon" className="h-10 w-10 bg-white/80 hover:bg-white" onClick={handleOpenVideo}>
               <Play className="h-5 w-5" />
@@ -58,10 +46,7 @@ export const VideoCard = ({ spot }: VideoCardProps) => {
             <Link to={`/spots/${spot.id}`} className="font-medium hover:underline text-lg line-clamp-1">
               {spot.title}
             </Link>
-            <Badge variant={
-              spot.status === 'Publié' ? 'default' : 
-              spot.status === 'En attente' ? 'outline' : 'secondary'
-            }>
+            <Badge variant={spot.status === 'Publié' ? 'default' : spot.status === 'En attente' ? 'outline' : 'secondary'}>
               {spot.status}
             </Badge>
           </div>
@@ -86,20 +71,10 @@ export const VideoCard = ({ spot }: VideoCardProps) => {
       <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
         <DialogContent className="max-w-4xl h-auto p-0 overflow-hidden bg-black border-none">
           <DialogTitle className="sr-only">Aperçu de la vidéo</DialogTitle>
-          {spot.videoUrl && (
-            <video 
-              className="w-full h-auto"
-              src={spot.videoUrl} 
-              controls
-              autoPlay
-              controlsList="nodownload"
-              poster={spot.thumbnailUrl}
-            >
+          {spot.videoUrl && <video className="w-full h-auto" src={spot.videoUrl} controls autoPlay controlsList="nodownload" poster={spot.thumbnailUrl}>
               Votre navigateur ne prend pas en charge la lecture vidéo.
-            </video>
-          )}
+            </video>}
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 };
