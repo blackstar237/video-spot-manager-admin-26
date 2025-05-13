@@ -10,10 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ThemeToggle } from './ThemeToggle';
 
 export const Header = () => {
   return (
-    <header className="border-b bg-white p-4 flex items-center justify-between">
+    <header className="border-b bg-background p-4 flex items-center justify-between">
       <div className="flex items-center gap-4">
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -24,6 +25,7 @@ export const Header = () => {
         </div>
       </div>
       <div className="flex items-center gap-3">
+        <ThemeToggle />
         <Button variant="outline" size="icon">
           <Bell className="h-5 w-5" />
         </Button>

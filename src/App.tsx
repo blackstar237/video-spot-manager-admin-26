@@ -11,29 +11,32 @@ import SpotsListSupabase from "./pages/SpotsListSupabase";
 import AddEditSpot from "./pages/AddEditSpot";
 import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
+import { ThemeProvider } from "./providers/ThemeProvider";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route element={<AdminLayout />}>
-            <Route path="/" element={<Navigate to="/spots" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/spots" element={<SpotsListSupabase />} />
-            <Route path="/spots-mock" element={<SpotsList />} />
-            <Route path="/spots/new" element={<AddEditSpot />} />
-            <Route path="/spots/:id" element={<AddEditSpot />} />
-            <Route path="/categories" element={<Categories />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route element={<AdminLayout />}>
+              <Route path="/" element={<Navigate to="/spots" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/spots" element={<SpotsListSupabase />} />
+              <Route path="/spots-mock" element={<SpotsList />} />
+              <Route path="/spots/new" element={<AddEditSpot />} />
+              <Route path="/spots/:id" element={<AddEditSpot />} />
+              <Route path="/categories" element={<Categories />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

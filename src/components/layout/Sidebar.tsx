@@ -9,7 +9,7 @@ export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
 
   const menuItems = [
-    { icon: Home, label: 'Tableau de Bord', href: '/' },
+    { icon: Home, label: 'Tableau de Bord', href: '/dashboard' },
     { icon: Video, label: 'Spots', href: '/spots' },
     { icon: Upload, label: 'Ajouter un Spot', href: '/spots/new' },
     { icon: Tag, label: 'Catégories', href: '/categories' },
