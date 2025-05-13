@@ -46,41 +46,41 @@
   }
 
   .dark {
-    --background: 240 10% 4%; /* Fond très sombre */
-    --foreground: 210 40% 98%;
+    --background: 240 10% 3.9%; /* Fond très sombre */
+    --foreground: 0 0% 98%; /* Texte presque blanc */
 
-    --card: 240 10% 10%; /* Composants légèrement plus clairs */
-    --card-foreground: 210 40% 98%;
+    --card: 240 10% 8%; /* Composants légèrement plus clairs que le fond */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 10%; /* Plus clair que le fond */
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 10% 8%; /* Identique aux cartes */
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 260 67% 75%;
+    --primary: 260 67% 75%; /* Violet clair */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 260 22% 54%;
+    --secondary: 260 30% 40%; /* Violet plus foncé */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 6% 20%; /* Plus clair pour être visible */
-    --muted-foreground: 215 20.2% 75%;
+    --muted: 240 6% 15%; /* Plus foncé mais visible */
+    --muted-foreground: 240 5% 75%;
 
-    --accent: 260 20% 20%; /* Plus clair que le fond */
+    --accent: 260 20% 15%; /* Accent subtil */
     --accent-foreground: 260 60% 80%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 240 6% 20%; /* Bordures plus visibles */
-    --input: 240 6% 20%; /* Inputs plus visibles */
-    --ring: 260 67% 75%;
+    --border: 240 6% 15%; /* Bordures légèrement visibles */
+    --input: 240 6% 15%; /* Inputs visibles */
+    --ring: 260 60% 60%;
 
-    --sidebar-background: 240 10% 8%; /* Sidebar légèrement plus clair que le fond principal */
+    --sidebar-background: 240 10% 5%; /* Sidebar légèrement plus foncé que le fond principal */
     --sidebar-foreground: 260 60% 90%;
     --sidebar-primary: 260 67% 75%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 10% 15%; /* Accent plus visible */
+    --sidebar-accent: 240 10% 12%; /* Accent plus visible */
     --sidebar-accent-foreground: 260 60% 90%;
-    --sidebar-border: 240 10% 15%;
+    --sidebar-border: 240 10% 12%;
     --sidebar-ring: 260 67% 75%;
   }
 }
@@ -97,7 +97,7 @@
 
 @layer components {
   .video-card {
-    @apply rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md;
+    @apply rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-primary/10;
   }
   
   .video-thumbnail {
@@ -106,5 +106,14 @@
   
   .hover-scale {
     @apply transition-transform duration-200 hover:scale-105;
+  }
+
+  /* Styles spécifiques au mode sombre */
+  .dark .glass-card {
+    @apply bg-card/70 backdrop-blur-sm border border-border/50;
+  }
+  
+  .dark .hover-glow:hover {
+    @apply shadow-lg shadow-primary/20;
   }
 }

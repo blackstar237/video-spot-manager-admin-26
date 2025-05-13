@@ -13,28 +13,37 @@ import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./providers/ThemeProvider";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route element={<AdminLayout />}>
-              <Route path="/" element={<Navigate to="/spots" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/spots" element={<SpotsListSupabase />} />
-              <Route path="/spots-mock" element={<SpotsList />} />
-              <Route path="/spots/new" element={<AddEditSpot />} />
-              <Route path="/spots/:id" element={<AddEditSpot />} />
-              <Route path="/categories" element={<Categories />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <div className="relative min-h-screen dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-gray-800 dark:via-gray-900 dark:to-black">
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route element={<AdminLayout />}>
+                <Route path="/" element={<Navigate to="/spots" replace />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/spots" element={<SpotsListSupabase />} />
+                <Route path="/spots-mock" element={<SpotsList />} />
+                <Route path="/spots/new" element={<AddEditSpot />} />
+                <Route path="/spots/:id" element={<AddEditSpot />} />
+                <Route path="/categories" element={<Categories />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </div>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
