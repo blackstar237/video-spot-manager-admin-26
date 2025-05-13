@@ -14,33 +14,33 @@ import { ThemeToggle } from './ThemeToggle';
 
 export const Header = () => {
   return (
-    <header className="border-b bg-background p-4 flex items-center justify-between">
+    <header className="border-b border-border bg-card p-4 flex items-center justify-between">
       <div className="flex items-center gap-4">
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Rechercher..."
-            className="pl-9"
+            className="pl-9 bg-background"
           />
         </div>
       </div>
       <div className="flex items-center gap-3">
         <ThemeToggle />
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" className="bg-background hover:bg-accent">
           <Bell className="h-5 w-5" />
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="bg-background hover:bg-accent">
               <User className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="bg-card border-border">
             <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem>Profil</DropdownMenuItem>
             <DropdownMenuItem>Préférences</DropdownMenuItem>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem>Déconnexion</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

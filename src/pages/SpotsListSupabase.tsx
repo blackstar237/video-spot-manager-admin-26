@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { VideoCard } from '@/components/spots/VideoCard';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Filter } from 'lucide-react';
 import { toast } from 'sonner';
+
 const SpotsListSupabase = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -52,24 +54,29 @@ const SpotsListSupabase = () => {
     console.error('Error fetching categories:', categoriesError);
     toast.error('Erreur lors du chargement des catégories');
   }
+
   const filteredSpots = spots ? spots.filter(spot => {
     const searchRegex = new RegExp(searchTerm, 'i');
     const matchesSearch = searchRegex.test(spot.title) || searchRegex.test(spot.description || '');
     const matchesCategory = selectedCategory === 'all' || spot.categoryId === selectedCategory;
     return matchesSearch && matchesCategory;
   }) : [];
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
+
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCategory(e.target.value);
   };
-  return <div className="space-y-4">
+
+  return (
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Liste des Spots</h1>
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="text-sm">
+            <Button variant="outline" size="sm" className="text-sm bg-card border border-border hover:bg-accent">
               <Filter className="w-4 h-4 mr-2 inline-block" />
               <span>Filtres</span>
             </Button>
@@ -84,19 +91,45 @@ const SpotsListSupabase = () => {
         </Sheet>
       </div>
 
-      <div className="flex space-x-4">
-        <Input type="text" placeholder="Rechercher un spot..." value={searchTerm} onChange={handleSearchChange} className="" />
-        <select value={selectedCategory} onChange={handleCategoryChange} className="border rounded px-2 py-1">
+      <div className="flex flex-col md:flex-row gap-4">
+        <Input 
+          type="text" 
+          placeholder="Rechercher un spot..." 
+          value={searchTerm} 
+          onChange={handleSearchChange} 
+          className="flex-1 bg-card"
+        />
+        <select 
+          value={selectedCategory} 
+          onChange={handleCategoryChange} 
+          className="border rounded px-3 py-2 bg-card border-border text-foreground focus:ring-1 focus:ring-primary"
+        >
           <option value="all">Toutes les catégories</option>
-          {categories.map(category => <option key={category.id} value={category.id}>
+          {categories.map(category => (
+            <option key={category.id} value={category.id}>
               {category.name}
-            </option>)}
+            </option>
+          ))}
         </select>
       </div>
 
-      {spotsLoading ? <p>Chargement des spots...</p> : spotsError ? <p>Erreur lors du chargement des spots.</p> : <Card className="p-4 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filteredSpots.length === 0 ? <p className="col-span-full text-center text-muted-foreground">Aucun spot trouvé</p> : filteredSpots.map(spot => <VideoCard key={spot.id} spot={spot} />)}
-        </Card>}
-    </div>;
+      {spotsLoading ? (
+        <p className="text-muted-foreground text-center py-8">Chargement des spots...</p>
+      ) : spotsError ? (
+        <p className="text-destructive text-center py-8">Erreur lors du chargement des spots.</p>
+      ) : (
+        <Card className="p-6 grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 bg-card border border-border">
+          {filteredSpots.length === 0 ? (
+            <p className="col-span-full text-center text-muted-foreground py-8">Aucun spot trouvé</p>
+          ) : (
+            filteredSpots.map(spot => (
+              <VideoCard key={spot.id} spot={spot} />
+            ))
+          )}
+        </Card>
+      )}
+    </div>
+  );
 };
+
 export default SpotsListSupabase;

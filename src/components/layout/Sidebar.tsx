@@ -24,7 +24,7 @@ export const Sidebar = () => {
         collapsed ? "w-[80px]" : "w-[250px]"
       )}
     >
-      <div className="p-4 flex items-center justify-between">
+      <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
         {!collapsed && (
           <div className="text-lg font-semibold text-primary">VideoSpot Admin</div>
         )}
@@ -32,7 +32,7 @@ export const Sidebar = () => {
           variant="ghost" 
           size="icon"
           onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto"
+          className="ml-auto text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
           {collapsed ? "→" : "←"}
         </Button>
@@ -43,7 +43,10 @@ export const Sidebar = () => {
             <li key={index}>
               <Link 
                 to={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
+                  window.location.pathname === item.href ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
+                )}
               >
                 <item.icon className="h-5 w-5" />
                 {!collapsed && <span>{item.label}</span>}
