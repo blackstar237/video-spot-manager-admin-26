@@ -32,9 +32,12 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Redirection de la racine "/" vers "/login" */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
+              
               <Route element={<AdminLayout />}>
-                <Route path="/" element={<Navigate to="/spots" replace />} />
+                {/* Suppression de l'ancienne redirection vers /spots */}
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/spots" element={<SpotsListSupabase />} />
                 <Route path="/spots-mock" element={<SpotsList />} />
