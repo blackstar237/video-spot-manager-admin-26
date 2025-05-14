@@ -11,6 +11,7 @@ import SpotsListSupabase from "./pages/SpotsListSupabase";
 import AddEditSpot from "./pages/AddEditSpot";
 import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
 import { ThemeProvider } from "./providers/ThemeProvider";
 
 const queryClient = new QueryClient({
@@ -31,6 +32,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/login" element={<Login />} />
               <Route element={<AdminLayout />}>
                 <Route path="/" element={<Navigate to="/spots" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
