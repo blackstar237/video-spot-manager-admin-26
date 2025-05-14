@@ -116,4 +116,31 @@
   .dark .hover-glow:hover {
     @apply shadow-lg shadow-primary/20;
   }
+
+  /* Ajout de styles pour le background de la page login */
+  .login-bg {
+    @apply bg-gradient-to-br from-blue-900 via-violet-800 to-rose-500;
+    background-size: 200% 200%;
+    animation: gradientBackground 15s ease infinite;
+  }
+  
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-lg border-white/20;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r;
+  }
+}
+
+@keyframes gradientBackground {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }

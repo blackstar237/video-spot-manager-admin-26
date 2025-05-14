@@ -52,12 +52,28 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/40 dark:from-background dark:to-background/60 p-4">
-      <div className="w-full max-w-md">
-        <Card className="border-border/40 shadow-lg dark:bg-card/70 dark:backdrop-blur-sm dark:border-border/30">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 via-violet-800 to-rose-500 p-4 relative overflow-hidden">
+      {/* Overlay pour donner un effet de brillance */}
+      <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px]"></div>
+      
+      {/* En-tête avec le nom de l'entreprise */}
+      <div className="absolute top-12 w-full text-center">
+        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-pink-500 via-blue-600 to-orange-500 inline-block text-transparent bg-clip-text mb-2">
+          Digit-Service
+        </h1>
+        <div className="h-1 w-24 mx-auto rounded bg-gradient-to-r from-pink-500 via-blue-600 to-orange-500"></div>
+      </div>
+      
+      {/* Logo stylisé */}
+      <div className="absolute top-32 opacity-10 pointer-events-none">
+        <div className="w-64 h-64 rounded-full bg-gradient-to-r from-blue-600 via-teal-400 to-orange-500 animate-pulse blur-xl"></div>
+      </div>
+      
+      <div className="w-full max-w-md z-10">
+        <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-xl">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-3xl font-bold tracking-tight">Admin</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-3xl font-bold tracking-tight text-white">Admin</CardTitle>
+            <CardDescription className="text-gray-200">
               Connectez-vous pour accéder au tableau de bord
             </CardDescription>
           </CardHeader>
@@ -69,15 +85,15 @@ const Login = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel className="text-gray-200">Email</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="votre@email.com" 
                           {...field} 
-                          className="bg-background/50 dark:bg-muted/10"
+                          className="bg-white/20 border-white/30 text-white placeholder:text-gray-300"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-rose-200" />
                     </FormItem>
                   )}
                 />
@@ -87,18 +103,18 @@ const Login = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mot de passe</FormLabel>
+                      <FormLabel className="text-gray-200">Mot de passe</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
                             {...field}
-                            className="pr-10 bg-background/50 dark:bg-muted/10"
+                            className="pr-10 bg-white/20 border-white/30 text-white"
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-300 hover:text-white"
                           >
                             {showPassword ? (
                               <EyeOff className="h-4 w-4" />
@@ -108,14 +124,14 @@ const Login = () => {
                           </button>
                         </div>
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-rose-200" />
                     </FormItem>
                   )}
                 />
                 
                 <Button 
                   type="submit" 
-                  className="w-full group mt-2"
+                  className="w-full group mt-2 bg-gradient-to-r from-pink-500 via-purple-600 to-blue-600 hover:from-pink-600 hover:via-purple-700 hover:to-blue-700 border-none"
                   disabled={form.formState.isSubmitting}
                 >
                   <LogIn className="mr-2 h-4 w-4 group-hover:animate-pulse" />
@@ -124,13 +140,16 @@ const Login = () => {
               </form>
             </Form>
           </CardContent>
-          <CardFooter className="flex justify-center border-t border-border/20 pt-5">
-            <p className="text-sm text-muted-foreground">
+          <CardFooter className="flex justify-center border-t border-white/10 pt-5">
+            <p className="text-sm text-gray-300">
               Portail réservé aux administrateurs
             </p>
           </CardFooter>
         </Card>
       </div>
+      
+      {/* Effet de lueur en bas */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-purple-500/20 to-transparent"></div>
     </div>
   );
 };
